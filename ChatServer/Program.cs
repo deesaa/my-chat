@@ -63,22 +63,24 @@ public class Server
         {
             Console.WriteLine(e);
         }
-        
         Console.WriteLine("Client connected: " + _tcpClient.Client);
     }
     
-    
-
-    public void Broadcast(Guid clientId, string message)
+    public void OnMessageFromClient(Guid clientId, string message)
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
         string username = originClient != null ? originClient.Username : "_SERVER_"; 
-        var messageObject = new Message(clientId, username, message);
-        _messages.Add(messageObject);
+        var messageObject = new SimpleMessage(clientId, username, message);
+        Broadcast(messageObject);
+    }
+
+    private void Broadcast(Message message, bool excludeSelf = true)
+    {
+        _messages.Add(message);
         foreach (var client in _clients)
         {
-            if(client.Id != clientId && client.IsAuthorized)
-                client.SendMessage(messageObject);
+            if((client.Id != message.SenderClientId || !excludeSelf) && client.IsAuthorized)
+                client.SendMessage(message);
         }
     }
 
@@ -86,8 +88,14 @@ public class Server
     public void OnClientEnterNameAndJoin(Guid clientId)
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
-        string username = originClient != null ? originClient.Username : "EmptyName"; 
-        Broadcast(_serverId, $"ENTER SERVER {username}");
+        string username = originClient != null ? originClient.Username : "EmptyName";
+        var messageObject = new UserJoinedMessage(_serverId, username);
+        
+        foreach (var client in _clients)
+        {
+            if(client.Id != clientId && client.IsAuthorized)
+                client.SendMessage(messageObject);
+        }
     }
 
     public void OnDisconnected(Guid clientId)
@@ -134,7 +142,7 @@ public class Client
 
     public async void SendMessage(Message message)
     {
-        byte[] bytes = Encoding.Unicode.GetBytes(message.GetJson());
+        byte[] bytes = Encoding.Unicode.GetBytes(message.ToJson());
         await _networkStream.WriteAsync(bytes);
         Console.WriteLine($"Message sent from server to client id : {_id}, message : {message}");
     }
@@ -177,7 +185,7 @@ public class Client
         }
 
         var messageBody = message["message"]?.GetValue<string>();
-        _server.Broadcast(_id, messageBody ?? "_empty");
+        _server.OnMessageFromClient(_id, messageBody ?? "_empty");
     }
 
     private void Disconnect()
@@ -188,33 +196,73 @@ public class Client
     }
 }
 
-public class Message
+
+public abstract class Message
 {
     private static ulong _lastMessageId;
     public static ulong NextMessageId => _lastMessageId++;
 
-    private Guid _originClientId;
+    private Guid _senderClientId;
+    public Guid SenderClientId
+    {
+        get => _senderClientId;
+        protected set
+        {
+            _senderClientId = SenderClientId;
+        }
+    }
+
+    protected readonly DateTime UtcTime;
+    protected readonly ulong MessageOrdinalId;
+    
+    public Message(Guid senderClientId)
+    {
+        SenderClientId = senderClientId;
+        UtcTime = DateTime.UtcNow;
+        MessageOrdinalId = NextMessageId;
+    }
+    
+    public abstract string ToJson();
+}
+
+
+public class UserJoinedMessage : Message
+{
+    private string _joinedUsername;
+
+    public UserJoinedMessage(Guid senderClientId, string joinedUsername) : base(senderClientId)
+    {
+        _joinedUsername = joinedUsername;
+    }
+    public override string ToJson()
+    {
+        return JsonSerializer.Serialize(new
+        {
+            userJoinedName = _joinedUsername
+        });
+    }
+}
+
+
+public class SimpleMessage : Message
+{
     private string _username;
-    private DateTime _utcTime;
-    private ulong _messageId;
     private string _message;
     
-    public Message(Guid originClientId, string username, string message)
+    public SimpleMessage(Guid senderClientId, string username, string message) : base(senderClientId)
     {
         _username = username;
-        _originClientId = originClientId;
-        _utcTime = DateTime.UtcNow;
-        _messageId = NextMessageId;
         _message = message;
     }
 
-    public string GetJson()
+    public override string ToJson()
     {
         string json = JsonSerializer.Serialize(new
         {
-            utcTime = _utcTime,
-            messageId = _messageId,
-            message = _message
+            utcTime = UtcTime,
+            messageId = MessageOrdinalId,
+            message = _message,
+            username = _username
         });
         return json;
     }

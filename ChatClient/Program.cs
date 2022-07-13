@@ -5,6 +5,14 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
+public struct MessageData
+{
+    public DateTime UtcTime;
+    public string Message;
+    public string Username;
+    public int MessageId;
+}
+
 public static class Bootstrap
 {
     static void Main(string[] args)
@@ -13,10 +21,12 @@ public static class Bootstrap
 
         client.OnMessageFromServer = messageObject =>
         {
-            var dateTime = messageObject["utcTime"].GetValue<DateTime>();
-            var message = messageObject["message"].GetValue<string>();
-            var messageId = messageObject["messageId"].GetValue<int>();
-            Console.WriteLine($"{message} ({dateTime.ToLocalTime().ToShortTimeString()})");
+            Console.WriteLine($"{messageObject.Username}: {messageObject.Message} ({messageObject.UtcTime.ToLocalTime().ToShortTimeString()})");
+        };
+
+        client.OnOtherClientConnected = name =>
+        {
+            Console.WriteLine($"NEW BOY JOINED : {name} - WELCOME BUDDY");
         };
 
         client.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());
@@ -34,9 +44,9 @@ public static class Bootstrap
 
         while (true)
         {
-            Console.WriteLine("Enter Message:");
+           // Console.WriteLine("Enter Message:");
             string message = Console.ReadLine() ?? " ";
-            Ext.ConsoleLineBack(2);
+            Ext.ConsoleLineBack();
             client.Write(message);
         }
     }
@@ -44,12 +54,11 @@ public static class Bootstrap
 
 public static class Ext
 {
-    public static void ConsoleLineBack(int linesCount = 1)
+    public static void ConsoleLineBack()
     {
-        
-            Console.SetCursorPosition(0, Console.CursorTop - 1);
-            Console.Write(new string(' ', Console.BufferWidth));
-            Console.SetCursorPosition(0, Console.CursorTop - 1);
+        Console.SetCursorPosition(0, Console.CursorTop - 1);
+        Console.Write(new string(' ', Console.BufferWidth));
+        Console.SetCursorPosition(0, Console.CursorTop - 1);
     }
 }
 
@@ -162,8 +171,9 @@ public class ChatConnection
     private bool _isNameSet;
 
     public Action OnServerConnected;
-    public Action<JsonNode> OnMessageFromServer;
+    public Action<MessageData> OnMessageFromServer;
     public Action OnServerDisconnected;
+    public Action<string> OnOtherClientConnected;
 
     private IValidator _nameValidator = new NullValidator();
     private IValidator _messageValidator = new NullValidator();
@@ -242,7 +252,6 @@ public class ChatConnection
                 return;
             }
             _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
-
             
             byte[] _data = new byte[byteSize];
             Array.Copy(_receiveBuffer, _data, byteSize);
@@ -256,8 +265,28 @@ public class ChatConnection
         }
     }
 
-    private void RouteMessageFromServer(JsonNode message)
+    private void RouteMessageFromServer(JsonNode messageJson)
     {
-        OnMessageFromServer(message);
+        var messageObject = messageJson.AsObject();
+
+        if (messageObject.TryGetPropertyValue("userJoinedName", out var userJoinedName))
+        {
+            var name = userJoinedName.GetValue<string>();
+            OnOtherClientConnected(name);
+            return;
+        }
+
+        var utcTime = messageObject["utcTime"].GetValue<DateTime>();
+        var message = messageObject["message"].GetValue<string>();
+        var username = messageObject["username"].GetValue<string>();
+        var messageId = messageObject["messageId"].GetValue<int>();
+
+        OnMessageFromServer(new MessageData()
+        {
+            Message = message,
+            MessageId = messageId,
+            Username = username,
+            UtcTime = utcTime
+        });
     }
 }
