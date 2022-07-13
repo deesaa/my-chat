@@ -30,10 +30,12 @@ public class Server
 
     private List<Client> _clients = new();
     private List<Message> _messages = new();
+    private Guid _serverId;
 
     public Server(int port)
     {
         _port = port;
+        _serverId = Guid.NewGuid();
 
         Console.WriteLine("Starting server...");
 
@@ -48,7 +50,7 @@ public class Server
     {
         TcpClient _tcpClient = _tcpListener.EndAcceptTcpClient(result);
         _tcpListener.BeginAcceptTcpClient(OnTcpConnection, null);
-
+        
         Client newClient = new Client(Guid.NewGuid(), this);
         _clients.Add(newClient);
 
@@ -64,24 +66,34 @@ public class Server
         
         Console.WriteLine("Client connected: " + _tcpClient.Client);
     }
+    
+    
 
-    public void Broadcast(Guid originClientId, string message)
+    public void Broadcast(Guid clientId, string message)
     {
-        var originClient = _clients.FirstOrDefault(client => client.Id == originClientId);
-        string username = originClient != null ? originClient.Username : "EmptyName"; 
-        var messageObject = new Message(originClientId, username, message);
+        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
+        string username = originClient != null ? originClient.Username : "_SERVER_"; 
+        var messageObject = new Message(clientId, username, message);
         _messages.Add(messageObject);
         foreach (var client in _clients)
         {
-            if(client.Id != originClientId)
+            if(client.Id != clientId && client.IsAuthorized)
                 client.SendMessage(messageObject);
         }
     }
 
-    public void OnDisconnected(Guid id)
+    //Actually activate client and start sending messages after entering name from client side
+    public void OnClientEnterNameAndJoin(Guid clientId)
     {
-        _clients.RemoveAll(client => client.Id == id);
-        Console.WriteLine("User disconnected : " + id);
+        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
+        string username = originClient != null ? originClient.Username : "EmptyName"; 
+        Broadcast(_serverId, $"ENTER SERVER {username}");
+    }
+
+    public void OnDisconnected(Guid clientId)
+    {
+        _clients.RemoveAll(client => client.Id == clientId);
+        Console.WriteLine("User disconnected : " + clientId);
     }
 }
 
@@ -101,6 +113,7 @@ public class Client
     public bool IsConnected => _tcpClient != null && _tcpClient.Client != null;
     public Guid Id => _id;
     public string Username => _name;
+    public bool IsAuthorized => _name != null;
 
     public Client(Guid id, Server server)
     {
@@ -159,6 +172,7 @@ public class Client
         if (setName != null)
         {
             _name = setName.GetValue<string>();
+            _server.OnClientEnterNameAndJoin(_id);
             return;
         }
 

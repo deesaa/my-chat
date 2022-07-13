@@ -19,17 +19,10 @@ public static class Bootstrap
             Console.WriteLine($"{message} ({dateTime.ToLocalTime().ToShortTimeString()})");
         };
 
-        client.SetMessageValidator(new LengthValidator(1, 128,
-            (message, maxLength) => 
-                Console.WriteLine($"Message {message} is too long. Max size is {maxLength} chars"),
-            (message, minLength) =>
-                Console.WriteLine($"Message {message} is too small. Min size is {minLength} chars")));
-        
-        client.SetNameValidator(new LengthValidator(4, 16,
-            (name, maxLength) => 
-                Console.WriteLine($"Name {name} is too long. Max size is {maxLength} chars"),
-            (name, minLength) =>
-                Console.WriteLine($"Name {name} is too small. Min size is {minLength} chars")));
+        client.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());
+        client.SetNameValidator(ValidatorFactory.GetDefaultNameValidator());
+        client.SetMessageSterilizer(new TrimSterilizer());
+        client.SetNameSterilizer(new EmptyCharsSterilizer());
 
         while (!client.IsNameSet)
         {
@@ -64,20 +57,20 @@ public static class ValidatorFactory
 {
     public static IValidator GetDefaultNameValidator()
     {
-       return new EmptyCharsValidator(new LengthValidator(4, 16,
+       return new LengthValidator(4, 16,
             (name, maxLength) =>
                 Console.WriteLine($"Name {name} is too long. Max size is {maxLength} chars"),
             (name, minLength) =>
-                Console.WriteLine($"Name {name} is too small. Min size is {minLength} chars")));
+                Console.WriteLine($"Name {name} is too small. Min size is {minLength} chars"));
     }
     
     public static IValidator GetDefaultMessageValidator()
     {
-        return new EmptyCharsValidator(new LengthValidator(1, 128,
+        return new LengthValidator(1, 128,
             (message, maxLength) => 
                 Console.WriteLine($"Message {message} is too long. Max size is {maxLength} chars"),
             (message, minLength) =>
-                Console.WriteLine($"Message {message} is too small. Min size is {minLength} chars")));
+                Console.WriteLine($"Message {message} is too small. Min size is {minLength} chars"));
     }
 }
 
@@ -86,19 +79,33 @@ public interface IValidator
     bool Validate(string value);
 }
 
-public class EmptyCharsValidator : IValidator
+public class TrimSterilizer : ISterilizer
 {
-    private IValidator _validator;
-    public EmptyCharsValidator(IValidator validator)
+    public string Sterilize(string value)
     {
-        _validator = validator;
+        return value.Trim();
     }
+}
 
-    public bool Validate(string value)
+public class EmptyCharsSterilizer : ISterilizer
+{
+    public string Sterilize(string value)
     {
-        value = value.Trim();
-        return _validator.Validate(value);
+        return value.Replace(" ", "");
     }
+}
+
+public class NullSterilizer : ISterilizer
+{
+    public string Sterilize(string value)
+    {
+        return value;
+    }
+}
+
+public interface ISterilizer
+{
+    string Sterilize(string value);
 }
 
 public class NullValidator : IValidator
@@ -113,6 +120,9 @@ public class LengthValidator : IValidator
 {
     private Action<string, int> _onToLongCallback;
     private Action<string, int> _onToSmallCallback;
+    private int _minLength;
+    private int _maxLength;
+    
     public LengthValidator(int minLength, int maxLength, 
         Action<string, int> onToLongCallback, Action<string, int> onToSmallCallback)
     {
@@ -122,9 +132,6 @@ public class LengthValidator : IValidator
         _maxLength = maxLength;
     }
 
-    private int _minLength;
-    private int _maxLength;
-    
     public bool Validate(string value)
     {
         if (value.Length < _minLength)
@@ -137,7 +144,6 @@ public class LengthValidator : IValidator
             _onToLongCallback(value, _maxLength);
             return false;
         }
-
         return true;
     }
 }
@@ -148,7 +154,6 @@ public class ChatConnection
     private int _port = 26950;
 
     private int _bufferSize = 256;
-    private int _maxMessageSize = 128;
 
     private TcpClient _tcpClient;
     private NetworkStream _networkStream;
@@ -159,13 +164,16 @@ public class ChatConnection
     public Action OnServerConnected;
     public Action<JsonNode> OnMessageFromServer;
     public Action OnServerDisconnected;
-    private int _maxNameLength = 12;
-    private int _maxMessageLength = 24;
 
     private IValidator _nameValidator = new NullValidator();
-    public void SetNameValidator(IValidator validator) => _nameValidator = validator;
     private IValidator _messageValidator = new NullValidator();
+    private ISterilizer _nameSterilizer = new NullSterilizer(); 
+    private ISterilizer _messageSterilizer = new NullSterilizer(); 
+    public void SetNameValidator(IValidator validator) => _nameValidator = validator;
     public void SetMessageValidator(IValidator validator) => _messageValidator = validator;
+    public void SetNameSterilizer(ISterilizer sterilizer) => _nameSterilizer = sterilizer;
+    public void SetMessageSterilizer(ISterilizer sterilizer) => _messageSterilizer = sterilizer;
+
 
     public ChatConnection()
     {
@@ -182,6 +190,7 @@ public class ChatConnection
 
     public void SetName(string name)
     {
+        name = _nameSterilizer.Sterilize(name);
         if (!_nameValidator.Validate(name))
             return;
 
@@ -195,6 +204,7 @@ public class ChatConnection
     
     public void Write(string message)
     {
+        message = _messageSterilizer.Sterilize(message);
         if (!_messageValidator.Validate(message))
             return;
         
