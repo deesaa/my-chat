@@ -1,0 +1,15 @@
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ChatClient
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ChatClient.deps.json
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ChatClient.runtimeconfig.json
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ChatClient.dll
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ref/ChatClient.dll
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/ChatClient.pdb
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.csproj.AssemblyReference.cache
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.GeneratedMSBuildEditorConfig.editorconfig
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.AssemblyInfoInputs.cache
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.AssemblyInfo.cs
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.csproj.CoreCompileInputs.cache
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.dll
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ref/ChatClient.dll
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.pdb
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.genruntimeconfig.cache
