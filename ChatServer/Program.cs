@@ -69,7 +69,7 @@ public class Server
     public void OnMessageFromClient(Guid clientId, string message)
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
-        string username = originClient != null ? originClient.Username : "_SERVER_"; 
+        string username = originClient != null ? originClient.Username : "_NULL_"; 
         var messageObject = new SimpleMessage(clientId, username, message);
         Broadcast(messageObject);
     }
@@ -83,23 +83,27 @@ public class Server
                 client.SendMessage(message);
         }
     }
-
-    //Actually activate client and start sending messages after entering name from client side
+    
     public void OnClientEnterNameAndJoin(Guid clientId)
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
         string username = originClient != null ? originClient.Username : "EmptyName";
         var messageObject = new UserJoinedMessage(_serverId, username);
-        
-        foreach (var client in _clients)
-        {
-            if(client.Id != clientId && client.IsAuthorized)
-                client.SendMessage(messageObject);
-        }
+        Broadcast(messageObject);
+    }
+    
+    public void OnClientLeft(Guid clientId)
+    {
+        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
+        string username = originClient != null ? originClient.Username : "EmptyName";
+        var messageObject = new UserLeftMessage(clientId, username);
+        Broadcast(messageObject);
     }
 
     public void OnDisconnected(Guid clientId)
     {
+        OnClientLeft(clientId);
+        
         _clients.RemoveAll(client => client.Id == clientId);
         Console.WriteLine("User disconnected : " + clientId);
     }
@@ -142,6 +146,9 @@ public class Client
 
     public async void SendMessage(Message message)
     {
+        if(!IsConnected)
+            return;
+        
         byte[] bytes = Encoding.Unicode.GetBytes(message.ToJson());
         await _networkStream.WriteAsync(bytes);
         Console.WriteLine($"Message sent from server to client id : {_id}, message : {message}");
@@ -239,6 +246,23 @@ public class UserJoinedMessage : Message
         return JsonSerializer.Serialize(new
         {
             userJoinedName = _joinedUsername
+        });
+    }
+}
+
+public class UserLeftMessage : Message
+{
+    private string _joinedUsername;
+
+    public UserLeftMessage(Guid senderClientId, string joinedUsername) : base(senderClientId)
+    {
+        _joinedUsername = joinedUsername;
+    }
+    public override string ToJson()
+    {
+        return JsonSerializer.Serialize(new
+        {
+            userLeftName = _joinedUsername
         });
     }
 }

@@ -28,6 +28,11 @@ public static class Bootstrap
         {
             Console.WriteLine($"NEW BOY JOINED : {name} - WELCOME BUDDY");
         };
+        
+        client.OnOtherClientDisconnected = name =>
+        {
+            Console.WriteLine($"USER LEFT : {name}");
+        };
 
         client.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());
         client.SetNameValidator(ValidatorFactory.GetDefaultNameValidator());
@@ -38,6 +43,7 @@ public static class Bootstrap
         {
             Console.WriteLine("Enter Name:");
             string name = Console.ReadLine() ?? " ";
+            Ext.ConsoleLineBack();
             Ext.ConsoleLineBack();
             client.SetName(name);
         }
@@ -174,6 +180,7 @@ public class ChatConnection
     public Action<MessageData> OnMessageFromServer;
     public Action OnServerDisconnected;
     public Action<string> OnOtherClientConnected;
+    public Action<string> OnOtherClientDisconnected;
 
     private IValidator _nameValidator = new NullValidator();
     private IValidator _messageValidator = new NullValidator();
@@ -273,6 +280,13 @@ public class ChatConnection
         {
             var name = userJoinedName.GetValue<string>();
             OnOtherClientConnected(name);
+            return;
+        }
+        
+        if (messageObject.TryGetPropertyValue("userLeftName", out var userLeftName))
+        {
+            var name = userLeftName.GetValue<string>();
+            OnOtherClientDisconnected(name);
             return;
         }
 
