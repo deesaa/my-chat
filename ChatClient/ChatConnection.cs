@@ -18,8 +18,8 @@ public class ChatConnection
 
     private bool _isNameSet;
 
-    public Action OnServerConnected;
     public Action<MessageData> OnMessageFromServer;
+    public Action OnServerConnected;
     public Action OnServerDisconnected;
     public Action<string> OnOtherClientConnected;
     public Action<string> OnOtherClientDisconnected;
@@ -131,7 +131,8 @@ public class ChatConnection
 
         if(!_tcpClient.Connected)
             return;
-
+        
+        OnServerConnected();
         _networkStream = _tcpClient.GetStream();
         _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
     }
@@ -167,7 +168,7 @@ public class ChatConnection
             OnOtherClientConnected(name);
             return;
         }
-        
+
         if (messageObject.TryGetPropertyValue("userLeftName", out var userLeftName))
         {
             var name = userLeftName.GetValue<string>();

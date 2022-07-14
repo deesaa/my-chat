@@ -6,24 +6,20 @@
 
         chat.OnMessageFromServer = messageObject =>
         {
-            Console.WriteLine($"{messageObject.Username}: {messageObject.Message} ({messageObject.UtcTime.ToLocalTime().ToShortTimeString()})");
+            string time = messageObject.UtcTime.ToLocalTime().ToShortTimeString();
+            Console.WriteLine($"{messageObject.Username}: {messageObject.Message} ({time})");
         };
 
-        chat.OnOtherClientConnected = name =>
-        {
-            Console.WriteLine($"NEW BOY JOINED : {name} - WELCOME BUDDY");
-        };
-        
-        chat.OnOtherClientDisconnected = name =>
-        {
-            Console.WriteLine($"USER LEFT : {name}");
-        };
+        chat.OnOtherClientConnected = name => Console.WriteLine($"NEW BOY JOINED : {name} - WELCOME BUDDY");
+
+        chat.OnOtherClientDisconnected = name => Console.WriteLine($"USER LEFT : {name}");
 
         chat.OnServerDisconnected = () =>
         {
             Console.WriteLine($"WOW! You are disconnected!");
             ConnectionLoop(chat);
         };
+        
         chat.OnServerConnected = () => Console.WriteLine($"Connected to the server");
 
         chat.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());

@@ -89,7 +89,7 @@ public class Server
         Console.WriteLine("User disconnected : " + clientId);
     }
 
-    public void SendMessageHistoryToClient(Guid clientId, int sendMessageHistoryCount)
+    public void SendMessageHistoryToClient(Guid clientId, int sendMessageHistoryCount = 10)
     {
         var client = _clients.FirstOrDefault(client => client.Id == clientId);
         if(client == null)
