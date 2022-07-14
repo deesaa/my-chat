@@ -9,7 +9,7 @@ public class Server
     private int _port;
     private TcpListener _tcpListener;
 
-    private List<Client> _clients = new();
+    private List<ClientHolder> _clients = new();
     private List<Message> _messages = new();
     private Guid _serverId;
 
@@ -32,12 +32,12 @@ public class Server
         TcpClient _tcpClient = _tcpListener.EndAcceptTcpClient(result);
         _tcpListener.BeginAcceptTcpClient(OnTcpConnection, null);
         
-        Client newClient = new Client(Guid.NewGuid(), this);
-        _clients.Add(newClient);
+        ClientHolder newClientHolder = new ClientHolder(Guid.NewGuid(), this);
+        _clients.Add(newClientHolder);
 
         try
         {
-            Thread clientThread = new Thread(() => newClient.Connect(_tcpClient));
+            Thread clientThread = new Thread(() => newClientHolder.Connect(_tcpClient));
             clientThread.Start();
         }
         catch (Exception e)
@@ -69,7 +69,7 @@ public class Server
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
         string username = originClient != null ? originClient.Username : "EmptyName";
-        var messageObject = new UserJoinedMessage(_serverId, username);
+        var messageObject = new UserJoinedMessage(clientId, username);
         Broadcast(messageObject);
     }
     

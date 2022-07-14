@@ -5,26 +5,23 @@ using JsonMessage;
 
 namespace ChatServer;
 
-public class Client
+public class ClientHolder
 {
     private Server _server;
-
     private string? _name;
     private Guid _id;
     private TcpClient _tcpClient;
     private NetworkStream _networkStream;
-    private MessageStream _messageStream = new();
+    private MessageDecoder _messageDecoder = new();
     private byte[] _receiveBuffer;
-    
     private int _bufferSize = 8192;
-  //  private int _maxMessageSize = 128;
 
     public bool IsConnected => _tcpClient != null && _tcpClient.Client != null;
     public Guid Id => _id;
     public string Username => _name;
     public bool IsAuthorized => _name != null;
 
-    public Client(Guid id, Server server)
+    public ClientHolder(Guid id, Server server)
     {
         _id = id;
         _server = server;
@@ -38,7 +35,7 @@ public class Client
         _networkStream = _tcpClient.GetStream();
         _receiveBuffer = new byte[_bufferSize];
 
-        _messageStream.OnNext = message =>
+        _messageDecoder.OnNext = message =>
         {
             JsonNode messageObject = JsonObject.Parse(message);
             RouteMessageFromClient(messageObject);
@@ -73,7 +70,7 @@ public class Client
             
             byte[] receivedBytes = new byte[byteSize];
             Array.Copy(_receiveBuffer, receivedBytes, byteSize);
-            _messageStream.PutBytes(receivedBytes);
+            _messageDecoder.PutBytes(receivedBytes);
             _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
 
         }

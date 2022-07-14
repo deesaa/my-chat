@@ -13,6 +13,7 @@ public static class Bootstrap
     {
         Console.Title = "Chat Server";
         _server = new Server(26950);
+        Console.WriteLine("Press any key to shut down the server");
         Console.ReadKey();
     }
 }

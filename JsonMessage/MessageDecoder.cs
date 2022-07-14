@@ -2,7 +2,7 @@
 
 namespace JsonMessage;
 
-public class MessageStream
+public class MessageDecoder
 {
     private Queue<byte> _dataQueue = new();
     private bool _needHeader = true;

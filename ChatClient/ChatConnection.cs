@@ -13,7 +13,7 @@ public class ChatConnection
 
     private TcpClient _tcpClient;
     private NetworkStream _networkStream;
-    private MessageStream _messageStream = new();
+    private MessageDecoder _messageDecoder = new();
     private byte[] _receiveBuffer;
 
     private bool _isNameSet;
@@ -43,16 +43,20 @@ public class ChatConnection
         };
         _receiveBuffer = new byte[_bufferSize];
         
-        _messageStream.OnNext = message =>
+        _messageDecoder.OnNext = message =>
         {
             JsonNode jsonMessage = JsonObject.Parse(message);
             RouteMessageFromServer(jsonMessage);
         };
-        
+    }
+
+    public void BeginConnect()
+    {
         _tcpClient.BeginConnect(_ip, _port, OnTcpConnect, null);
     }
 
     public bool IsNameSet => _isNameSet;
+    public bool Connected => _tcpClient.Connected;
 
     public void SetName(string name)
     {
@@ -83,11 +87,33 @@ public class ChatConnection
 
     private void SendMessage(string message)
     {
+        if(!_tcpClient.Connected)
+            return;
+        
         byte[] messageBytes = Encoding.Unicode.GetBytes(message);
         int messageByteCount = messageBytes.Length;
         byte[] messageByteCountBytes = BitConverter.GetBytes(messageByteCount);
-        _networkStream.Write(messageByteCountBytes);
-        _networkStream.Write(messageBytes);
+
+        try
+        {
+            _networkStream.Write(messageByteCountBytes);
+            _networkStream.Write(messageBytes);
+        }
+        catch (IOException e)
+        {
+            ServerDisconnected();
+        }
+    }
+
+    private void ServerDisconnected()
+    {
+        ResetConnection();
+        OnServerDisconnected();
+    }
+
+    private void ResetConnection()
+    {
+        _isNameSet = false;
     }
 
     private void OnTcpConnect(IAsyncResult ar)
@@ -99,7 +125,7 @@ public class ChatConnection
         catch (SocketException socketException)
         {
             Console.WriteLine("Trying to connect...");
-            Thread.Sleep(500);
+            Thread.Sleep(1500);
             _tcpClient.BeginConnect(_ip, _port, OnTcpConnect, null);
         }
 
@@ -122,7 +148,7 @@ public class ChatConnection
             
             byte[] _data = new byte[byteSize];
             Array.Copy(_receiveBuffer, _data, byteSize);
-            _messageStream.PutBytes(_data);
+            _messageDecoder.PutBytes(_data);
             _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
         }
         catch (Exception e)
