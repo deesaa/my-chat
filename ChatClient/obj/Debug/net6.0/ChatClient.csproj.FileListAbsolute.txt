@@ -13,3 +13,6 @@
 /Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ref/ChatClient.dll
 /Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.pdb
 /Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.genruntimeconfig.cache
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/JsonMessage.dll
+/Users/jds/RiderProjects/ChatServer/ChatClient/bin/Debug/net6.0/JsonMessage.pdb
+/Users/jds/RiderProjects/ChatServer/ChatClient/obj/Debug/net6.0/ChatClient.csproj.CopyComplete

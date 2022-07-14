@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json.Nodes;
+using JsonMessage;
 
 namespace ChatServer;
 
@@ -12,6 +13,7 @@ public class Client
     private Guid _id;
     private TcpClient _tcpClient;
     private NetworkStream _networkStream;
+    private MessageStream _messageStream = new();
     private byte[] _receiveBuffer;
     
     private int _bufferSize = 8192;
@@ -35,6 +37,12 @@ public class Client
         _tcpClient.SendBufferSize = _bufferSize;
         _networkStream = _tcpClient.GetStream();
         _receiveBuffer = new byte[_bufferSize];
+
+        _messageStream.OnNext = message =>
+        {
+            JsonNode messageObject = JsonObject.Parse(message);
+            RouteMessageFromClient(messageObject);
+        };
         
         _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
     }
@@ -63,13 +71,9 @@ public class Client
                 return;
             }
             
-            byte[] receivedBytes = new byte[_bufferSize];
-            Array.Copy(_receiveBuffer, receivedBytes, _bufferSize);
-
-            string message = Encoding.Unicode.GetString(receivedBytes, 0, byteSize);
-            JsonNode messageObject = JsonObject.Parse(message);
-            RouteMessageFromClient(messageObject);
-            
+            byte[] receivedBytes = new byte[byteSize];
+            Array.Copy(_receiveBuffer, receivedBytes, byteSize);
+            _messageStream.PutBytes(receivedBytes);
             _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
 
         }

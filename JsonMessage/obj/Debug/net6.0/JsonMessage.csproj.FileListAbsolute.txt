@@ -1,0 +1,12 @@
+/Users/jds/RiderProjects/ChatServer/JsonMessage/bin/Debug/net6.0/JsonMessage.deps.json
+/Users/jds/RiderProjects/ChatServer/JsonMessage/bin/Debug/net6.0/JsonMessage.dll
+/Users/jds/RiderProjects/ChatServer/JsonMessage/bin/Debug/net6.0/ref/JsonMessage.dll
+/Users/jds/RiderProjects/ChatServer/JsonMessage/bin/Debug/net6.0/JsonMessage.pdb
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.csproj.AssemblyReference.cache
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.GeneratedMSBuildEditorConfig.editorconfig
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.AssemblyInfoInputs.cache
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.AssemblyInfo.cs
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.csproj.CoreCompileInputs.cache
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.dll
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/ref/JsonMessage.dll
+/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/Debug/net6.0/JsonMessage.pdb

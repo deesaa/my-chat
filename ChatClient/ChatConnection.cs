@@ -13,7 +13,7 @@ public class ChatConnection
 
     private TcpClient _tcpClient;
     private NetworkStream _networkStream;
-    private MessageStream _messageStream;
+    private MessageStream _messageStream = new();
     private byte[] _receiveBuffer;
 
     private bool _isNameSet;
@@ -42,6 +42,13 @@ public class ChatConnection
             SendBufferSize = _bufferSize
         };
         _receiveBuffer = new byte[_bufferSize];
+        
+        _messageStream.OnNext = message =>
+        {
+            JsonNode jsonMessage = JsonObject.Parse(message);
+            RouteMessageFromServer(jsonMessage);
+        };
+        
         _tcpClient.BeginConnect(_ip, _port, OnTcpConnect, null);
     }
 
@@ -77,6 +84,9 @@ public class ChatConnection
     private void SendMessage(string message)
     {
         byte[] messageBytes = Encoding.Unicode.GetBytes(message);
+        int messageByteCount = messageBytes.Length;
+        byte[] messageByteCountBytes = BitConverter.GetBytes(messageByteCount);
+        _networkStream.Write(messageByteCountBytes);
         _networkStream.Write(messageBytes);
     }
 
@@ -100,66 +110,6 @@ public class ChatConnection
         _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
     }
 
-    private int bytesToRead = 0;
-    private bool waitHeader = true;
-    private Queue<byte> currentBytes = new Queue<byte>();
-
-    private bool TryCutHeader(Queue<byte> data, out int header)
-    {
-        int headerByteSize = sizeof(int);
-        if (data.Count < headerByteSize)
-        {
-            header = -1;
-            return false;
-        }
-        byte[] headerBytes = new byte[headerByteSize];
-
-        for (int i = 0; i < headerByteSize; i++)
-        {
-            headerBytes[i] = data.Dequeue();
-        }
-        
-        header = BitConverter.ToInt32(headerBytes);
-        return true;
-    }
-
-    private void ProcessBytes()
-    {
-        if(currentBytes.Count <= 0)
-            return;
-
-        if (waitHeader)
-        {
-            if(!TryCutHeader(currentBytes, out int header))
-                return;
-            bytesToRead = header;
-            waitHeader = false;
-        }
-        
-        if (!waitHeader && bytesToRead <= currentBytes.Count)
-        {
-            byte[] data = new byte[bytesToRead];
-            for (int i = 0; i < bytesToRead; i++)
-            {
-                data[i] = currentBytes.Dequeue();
-            }
-
-            string message = Encoding.Unicode.GetString(data);
-            JsonNode jsonMessage = JsonObject.Parse(message);
-            RouteMessageFromServer(jsonMessage);
-            waitHeader = true;
-            ProcessBytes();
-        }
-    }
-
-    private void DebugQueuePrint(Queue<byte> queue)
-    {
-        var array = queue.ToArray();
-        var s = Encoding.Unicode.GetString(array);
-       // JsonNode json = JsonObject.Parse(s);
-        Console.WriteLine(s);
-    }
-
     private void OnNetworkStreamData(IAsyncResult ar)
     {
         try
@@ -172,15 +122,8 @@ public class ChatConnection
             
             byte[] _data = new byte[byteSize];
             Array.Copy(_receiveBuffer, _data, byteSize);
-            foreach (var dataByte in _data)
-            {
-                currentBytes.Enqueue(dataByte);
-            }
-
-            DebugQueuePrint(currentBytes);
-            ProcessBytes();
-           
-           _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
+            _messageStream.PutBytes(_data);
+            _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
         }
         catch (Exception e)
         {

@@ -6,14 +6,6 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v6.0": {
-      "ChatServer/1.0.0": {
-        "dependencies": {
-          "JsonMessage": "1.0.0"
-        },
-        "runtime": {
-          "ChatServer.dll": {}
-        }
-      },
       "JsonMessage/1.0.0": {
         "runtime": {
           "JsonMessage.dll": {}
@@ -22,11 +14,6 @@
     }
   },
   "libraries": {
-    "ChatServer/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
     "JsonMessage/1.0.0": {
       "type": "project",
       "serviceable": false,

@@ -25,6 +25,62 @@
         "frameworks": {
           "net6.0": {
             "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj": {
+                "projectPath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/jds/.dotnet/sdk/6.0.101/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj",
+        "projectName": "JsonMessage",
+        "projectPath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj",
+        "packagesPath": "/Users/jds/.nuget/packages/",
+        "outputPath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/jds/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
             "projectReferences": {}
           }
         },

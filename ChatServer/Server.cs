@@ -94,14 +94,21 @@ public class Server
         var client = _clients.FirstOrDefault(client => client.Id == clientId);
         if(client == null)
             return;
+
+        List<Message> messages = new List<Message>();
         
         for (int i = 0; i < sendMessageHistoryCount; i++)
         {
             if(_messages.Count - i <= 0)
                 break;
-
             int index = _messages.Count - (i + 1);
-            var message = _messages[index];
+            messages.Add(_messages[index]);
+        }
+        
+        messages.Reverse();
+        
+        foreach (var message in messages)
+        {
             client.SendMessage(message);
         }
     }

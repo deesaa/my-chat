@@ -32,7 +32,7 @@ public static class Bootstrap
             chat.SetName(name);
         }
         
-        chat.RequestMessageHistory(3);
+        chat.RequestMessageHistory(10);
 
         while (true)
         {
