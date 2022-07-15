@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using ChatServer;
 using JsonMessage;
 
 public class ChatConnection
@@ -12,8 +13,7 @@ public class ChatConnection
     private int _bufferSize = 8192;
 
     private TcpClient _tcpClient;
-    private NetworkStream _networkStream;
-    private MessageDecoder _messageDecoder = new();
+    private JsonNetStream _jsonStream;
     private byte[] _receiveBuffer;
 
     private bool _isNameSet;
@@ -23,6 +23,7 @@ public class ChatConnection
     public Action OnServerDisconnected;
     public Action<string> OnOtherClientConnected;
     public Action<string> OnOtherClientDisconnected;
+    public Action<string, string> OnUserNameColorChanged;
 
     private IValidator _nameValidator = new NullValidator();
     private IValidator _messageValidator = new NullValidator();
@@ -41,13 +42,9 @@ public class ChatConnection
             ReceiveBufferSize = _bufferSize,
             SendBufferSize = _bufferSize
         };
-        _receiveBuffer = new byte[_bufferSize];
-        
-        _messageDecoder.OnNext = message =>
-        {
-            JsonNode jsonMessage = JsonObject.Parse(message);
-            RouteMessageFromServer(jsonMessage);
-        };
+
+        _jsonStream = new JsonNetStream(_tcpClient);
+        _jsonStream.OnNext = RouteMessageFromServer;
     }
 
     public void BeginConnect()
@@ -90,14 +87,9 @@ public class ChatConnection
         if(!_tcpClient.Connected)
             return;
         
-        byte[] messageBytes = Encoding.Unicode.GetBytes(message);
-        int messageByteCount = messageBytes.Length;
-        byte[] messageByteCountBytes = BitConverter.GetBytes(messageByteCount);
-
         try
         {
-            _networkStream.Write(messageByteCountBytes);
-            _networkStream.Write(messageBytes);
+            _jsonStream.Write(message);
         }
         catch (IOException e)
         {
@@ -133,28 +125,27 @@ public class ChatConnection
             return;
         
         OnServerConnected();
-        _networkStream = _tcpClient.GetStream();
-        _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
+        _jsonStream.BeginRead();
+    }
+    
+    public interface IServerMessage
+    {
+        public void Execute();
     }
 
-    private void OnNetworkStreamData(IAsyncResult ar)
+    public class UserJoinedMessage : IServerMessage
     {
-        try
+        private string _userName;
+        private Action<string> OnMessage;
+        public UserJoinedMessage(string userName, Action<string> onMessage)
         {
-            int byteSize = _networkStream.EndRead(ar);
-            if (byteSize <= 0)
-            {
-                return;
-            }
-            
-            byte[] _data = new byte[byteSize];
-            Array.Copy(_receiveBuffer, _data, byteSize);
-            _messageDecoder.PutBytes(_data);
-            _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
+            _userName = userName;
+            OnMessage = onMessage;
         }
-        catch (Exception e)
+
+        public void Execute()
         {
-            Console.WriteLine(e);
+            OnMessage(_userName);
         }
     }
 
@@ -175,19 +166,17 @@ public class ChatConnection
             OnOtherClientDisconnected(name);
             return;
         }
-
-        var utcTime = messageObject["utcTime"].GetValue<DateTime>();
-        var message = messageObject["message"].GetValue<string>();
-        var username = messageObject["username"].GetValue<string>();
-        var messageId = messageObject["messageId"].GetValue<int>();
-
-        OnMessageFromServer(new MessageData()
+        
+        if (messageObject.TryGetPropertyValue("userSetNameColor", out var userSetNameColor))
         {
-            Message = message,
-            MessageId = messageId,
-            Username = username,
-            UtcTime = utcTime
-        });
+            var newNameColor = userSetNameColor.GetValue<string>();
+            var usernameWithNewColor = messageObject["username"].GetValue<string>();
+            OnUserNameColorChanged(usernameWithNewColor, newNameColor);
+            return;
+        }
+
+        var messageData = messageObject["userMessage"].GetValue<MessageData>();
+        OnMessageFromServer(messageData);
     }
 
     public void RequestMessageHistory(int messagesCount)

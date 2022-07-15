@@ -4,24 +4,25 @@ namespace ChatServer;
 
 public class SimpleMessage : Message
 {
-    private string _username;
     private string _message;
+    private UserData _user;
     
-    public SimpleMessage(Guid senderClientId, string username, string message) : base(senderClientId)
+    public SimpleMessage(Guid senderClientId, UserData user, string message) : base(senderClientId)
     {
-        _username = username;
+        _user = user;
         _message = message;
     }
 
     public override string ToJson()
     {
-        string json = JsonSerializer.Serialize(new
+        MessageData messageData = new MessageData()
         {
-            utcTime = UtcTime,
-            messageId = MessageOrdinalId,
-            message = _message,
-            username = _username
-        });
+            Message = _message,
+            MessageId = MessageOrdinalId,
+            UtcTime = UtcTime,
+            User = _user
+        };
+        string json = JsonSerializer.Serialize(messageData);
         return json;
     }
 }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
+using ChatServer.Database;
 
 namespace ChatServer;
 
@@ -13,10 +14,13 @@ public class Server
     private List<Message> _messages = new();
     private Guid _serverId;
 
+    private IChatDb _chatDb;
+
     public Server(int port)
     {
         _port = port;
         _serverId = Guid.NewGuid();
+        _chatDb = ChatDb.CreateOrLoad();
 
         Console.WriteLine("Starting server...");
 
@@ -51,6 +55,10 @@ public class Server
     {
         var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
         string username = originClient != null ? originClient.Username : "_NULL_"; 
+        UserData userData = new UserData()
+        {
+            
+        }
         var messageObject = new SimpleMessage(clientId, username, message);
         Broadcast(messageObject, false);
     }

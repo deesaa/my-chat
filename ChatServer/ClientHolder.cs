@@ -11,9 +11,8 @@ public class ClientHolder
     private string? _name;
     private Guid _id;
     private TcpClient _tcpClient;
-    private NetworkStream _networkStream;
-    private MessageDecoder _messageDecoder = new();
-    private byte[] _receiveBuffer;
+    private JsonNetStream _jsonStream;
+    
     private int _bufferSize = 8192;
 
     public bool IsConnected => _tcpClient != null && _tcpClient.Client != null;
@@ -32,16 +31,10 @@ public class ClientHolder
         _tcpClient = tcpClient;
         _tcpClient.ReceiveBufferSize = _bufferSize;
         _tcpClient.SendBufferSize = _bufferSize;
-        _networkStream = _tcpClient.GetStream();
-        _receiveBuffer = new byte[_bufferSize];
-
-        _messageDecoder.OnNext = message =>
-        {
-            JsonNode messageObject = JsonObject.Parse(message);
-            RouteMessageFromClient(messageObject);
-        };
-        
-        _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
+        _jsonStream = new JsonNetStream(_tcpClient);
+        _jsonStream.OnNext = RouteMessageFromClient;
+        _jsonStream.OnDisconnect = Disconnect;
+        _jsonStream.BeginRead();
     }
 
     public void SendMessage(Message message)
@@ -50,34 +43,8 @@ public class ClientHolder
             return;
 
         var jsonMessage = message.ToJson();
-        byte[] bytes = Encoding.Unicode.GetBytes(jsonMessage);
-        int byteSize = bytes.Length;
-        _networkStream.Write(BitConverter.GetBytes(byteSize));
-        _networkStream.Write(bytes);
+        _jsonStream.Write(jsonMessage);
         Console.WriteLine($"Message sent from server to client id : {_id}, message : {message}");
-    }
-
-    private void OnNetworkStreamData(IAsyncResult receive)
-    {
-        try
-        {
-            int byteSize = _networkStream.EndRead(receive);
-            if (byteSize <= 0)
-            {
-                Disconnect();
-                return;
-            }
-            
-            byte[] receivedBytes = new byte[byteSize];
-            Array.Copy(_receiveBuffer, receivedBytes, byteSize);
-            _messageDecoder.PutBytes(receivedBytes);
-            _networkStream.BeginRead(_receiveBuffer, 0, _bufferSize, OnNetworkStreamData, null);
-
-        }
-        catch (Exception e)
-        { 
-            Console.WriteLine("OnNetworkStreamData Exception: " + e);
-        }
     }
 
     private void RouteMessageFromClient(JsonNode message)
@@ -105,7 +72,7 @@ public class ClientHolder
 
     private void Disconnect()
     {
-        _networkStream.Close();
+        _jsonStream.Close();
         _tcpClient.Close();
         _server.OnDisconnected(_id);
     }

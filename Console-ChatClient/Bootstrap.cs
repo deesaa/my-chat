@@ -21,6 +21,8 @@
         };
         
         chat.OnServerConnected = () => Console.WriteLine($"Connected to the server");
+        
+        chat.OnUserNameColorChanged = () => Console.WriteLine($"Connected to the server");
 
         chat.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());
         chat.SetNameValidator(ValidatorFactory.GetDefaultNameValidator());

@@ -5,6 +5,6 @@ public struct MessageData
 {
     public DateTime UtcTime;
     public string Message;
-    public string Username;
-    public int MessageId;
+    public ulong MessageId;
+    public UserData User;
 }
