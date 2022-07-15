@@ -1,3 +1,5 @@
+namespace Console_ChatClient;
+
 public static class Ext
 {
     public static void ConsoleLineBack()

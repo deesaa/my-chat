@@ -18,3 +18,4 @@
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/obj/Debug/net6.0/ref/Console-ChatClient.dll
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/obj/Debug/net6.0/Console-ChatClient.pdb
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/obj/Debug/net6.0/Console-ChatClient.genruntimeconfig.cache
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/Newtonsoft.Json.dll

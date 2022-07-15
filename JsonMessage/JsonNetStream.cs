@@ -1,9 +1,8 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json.Nodes;
-using JsonMessage;
 
-namespace ChatServer;
+namespace JsonMessage;
 
 public class JsonNetStream
 {

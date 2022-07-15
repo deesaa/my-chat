@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using ChatServer.Database;
+using ChatServer.ServerCommands;
+using JsonMessage.DTO;
 
 namespace ChatServer;
 
@@ -11,7 +13,7 @@ public class Server
     private TcpListener _tcpListener;
 
     private List<ClientHolder> _clients = new();
-    private List<Message> _messages = new();
+   // private List<Message> _messages = new();
     private Guid _serverId;
 
     private IChatDb _chatDb;
@@ -51,48 +53,67 @@ public class Server
         Console.WriteLine("Client connected: " + _tcpClient.Client);
     }
     
-    public void OnMessageFromClient(Guid clientId, string message)
+    private void Broadcast(Command command, bool excludeSelf = true)
     {
-        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
-        string username = originClient != null ? originClient.Username : "_NULL_"; 
-        UserData userData = new UserData()
-        {
-            
-        }
-        var messageObject = new SimpleMessage(clientId, username, message);
-        Broadcast(messageObject, false);
-    }
-
-    private void Broadcast(Message message, bool excludeSelf = true)
-    {
-        _messages.Add(message);
+        //_messages.Add(message);
         foreach (var client in _clients)
         {
-            if((client.Id != message.SenderClientId || !excludeSelf) && client.IsAuthorized)
-                client.SendMessage(message);
+            if((client.Id != command.OriginId || !excludeSelf) && client.IsAuthorized)
+                client.SendMessage(command);
         }
     }
     
-    public void OnClientEnterNameAndJoin(Guid clientId)
+    public void OnMessageFromClient(Guid clientId, string message)
     {
-        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
-        string username = originClient != null ? originClient.Username : "EmptyName";
-        var messageObject = new UserJoinedMessage(clientId, username);
-        Broadcast(messageObject);
+        UserData? userData = _chatDb.GetUserData(clientId);
+        if (userData != null)
+        {
+            MessageCommand messageCommand = new MessageCommand(userData.Value, message);
+            MessageData data = messageCommand.CreateData();
+            _chatDb.AddMessage(data);
+            Broadcast(messageCommand, false);
+        }
+    }
+    
+    public void OnClientTryEnterNamePassword(Guid clientId, string name, string password)
+    {
+        var client = _clients.FirstOrDefault(client => client.Id == clientId);
+        if(client == null) return;
+        
+        if (_chatDb.GetAllUsers().TryFirst(out var outuser, user => user.Username == name))
+        {
+            if (outuser.Password != password)
+            {
+                client.SendMessage(new WrongNameOrPasswordCommand(clientId));
+                return;
+            }
+            client.SendMessage(new LoginSuccessCommand(clientId));
+            client.IsAuthorized = true;
+            Broadcast(new UserJoinedCommand(outuser));
+            return;
+        }
+
+        var newUser = new UserData(clientId, name, password);
+        _chatDb.AddUserData(newUser);
+        client.SendMessage(new LoginSuccessCommand(newUser.Id));
+        client.IsAuthorized = true;
+        Broadcast(new UserJoinedCommand(newUser));
     }
     
     public void OnClientLeft(Guid clientId)
     {
-        var originClient = _clients.FirstOrDefault(client => client.Id == clientId);
-        string username = originClient != null ? originClient.Username : "EmptyName";
-        var messageObject = new UserLeftMessage(clientId, username);
+        var user = _chatDb.GetUserData(clientId).Value;
+        user = new UserData()
+        {
+            Color = user.Color,
+            Id = user.Id,
+            Password = user.Password,
+            Username = user.Username,
+            IsOnline = false
+        };
+        _chatDb.UpdateUserData(user);
+        var messageObject = new UserLeftCommand(clientId, user.Username);
         Broadcast(messageObject);
-    }
-
-    public void OnDisconnected(Guid clientId)
-    {
-        OnClientLeft(clientId);
-        
         _clients.RemoveAll(client => client.Id == clientId);
         Console.WriteLine("User disconnected : " + clientId);
     }
@@ -102,22 +123,19 @@ public class Server
         var client = _clients.FirstOrDefault(client => client.Id == clientId);
         if(client == null)
             return;
+        
+        foreach (var messageData in _chatDb.GetAllMessages().TakeLast(sendMessageHistoryCount))
+        {
+            UserData user = _chatDb.GetUserData(messageData.SenderUserId).Value;
+            client.SendMessage(new MessageCommand(messageData, user));
+        }
+    }
 
-        List<Message> messages = new List<Message>();
-        
-        for (int i = 0; i < sendMessageHistoryCount; i++)
-        {
-            if(_messages.Count - i <= 0)
-                break;
-            int index = _messages.Count - (i + 1);
-            messages.Add(_messages[index]);
-        }
-        
-        messages.Reverse();
-        
-        foreach (var message in messages)
-        {
-            client.SendMessage(message);
-        }
+    public void SendUsersDataToClient(Guid clientId)
+    {
+        var client = _clients.FirstOrDefault(client => client.Id == clientId);
+        if(client == null)
+            return;
+        client.SendMessage(new SendUsersDataCommand(clientId, _chatDb.GetAllUsers()));
     }
 }

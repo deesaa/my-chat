@@ -16,3 +16,4 @@
 /Users/jds/RiderProjects/ChatServer/ChatServer/bin/Debug/net6.0/JsonMessage.dll
 /Users/jds/RiderProjects/ChatServer/ChatServer/bin/Debug/net6.0/JsonMessage.pdb
 /Users/jds/RiderProjects/ChatServer/ChatServer/obj/Debug/net6.0/ChatServer.csproj.CopyComplete
+/Users/jds/RiderProjects/ChatServer/ChatServer/bin/Debug/net6.0/Newtonsoft.Json.dll

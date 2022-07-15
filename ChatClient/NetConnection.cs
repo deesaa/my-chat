@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
-using ChatServer;
+using JsonMessage;
+
+namespace ChatClient;
 
 public abstract class NetConnection
 {

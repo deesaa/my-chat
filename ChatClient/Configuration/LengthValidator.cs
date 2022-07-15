@@ -1,9 +1,13 @@
+namespace ChatClient.Configuration;
+
 public class LengthValidator : IValidator
 {
     private Action<string, int> _onToLongCallback;
     private Action<string, int> _onToSmallCallback;
     private int _minLength;
     private int _maxLength;
+
+    private IValidator _previousValidator;
     
     public LengthValidator(int minLength, int maxLength, 
         Action<string, int> onToLongCallback, Action<string, int> onToSmallCallback)
@@ -26,6 +30,7 @@ public class LengthValidator : IValidator
             _onToLongCallback(value, _maxLength);
             return false;
         }
+        
         return true;
     }
 }

@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json.Nodes;
+using ChatServer.ServerCommands;
 using JsonMessage;
 
 namespace ChatServer;
@@ -8,7 +10,7 @@ namespace ChatServer;
 public class ClientHolder
 {
     private Server _server;
-    private string? _name;
+    //private string? _name;
     private Guid _id;
     private TcpClient _tcpClient;
     private JsonNetStream _jsonStream;
@@ -17,8 +19,8 @@ public class ClientHolder
 
     public bool IsConnected => _tcpClient != null && _tcpClient.Client != null;
     public Guid Id => _id;
-    public string Username => _name;
-    public bool IsAuthorized => _name != null;
+   // public string Username => _name;
+    public bool IsAuthorized { get; set; }
 
     public ClientHolder(Guid id, Server server)
     {
@@ -37,25 +39,29 @@ public class ClientHolder
         _jsonStream.BeginRead();
     }
 
-    public void SendMessage(Message message)
+    public void SendMessage(Command command)
     {
         if(!IsConnected)
             return;
 
-        var jsonMessage = message.ToJson();
+        var jsonMessage = command.ToJson();
         _jsonStream.Write(jsonMessage);
-        Console.WriteLine($"Message sent from server to client id : {_id}, message : {message}");
+        Console.WriteLine($"Message sent from server to client id : {_id}, message : {command}");
     }
 
+    
+    
     private void RouteMessageFromClient(JsonNode message)
     {
         Console.WriteLine($"User {_id} : Server receive message: {message}");
 
-        var setName = message["setName"];
-        if (setName != null)
+        var enterName = message["enterName"];
+        var enterPassword = message["enterPassword"];
+        if (enterName != null && enterPassword != null)
         {
-            _name = setName.GetValue<string>();
-            _server.OnClientEnterNameAndJoin(_id);
+            string name = enterName.GetValue<string>();
+            string password = enterPassword.GetValue<string>();
+            _server.OnClientTryEnterNamePassword(_id, name, password);
             return;
         }
 
@@ -63,6 +69,13 @@ public class ClientHolder
         if (sendMessageHistoryCount != null)
         {
             _server.SendMessageHistoryToClient(_id, sendMessageHistoryCount.GetValue<int>());
+            return;
+        }
+        
+        var sendUsersData = message["sendUsersData"];
+        if (sendUsersData != null)
+        {
+            _server.SendUsersDataToClient(_id);
             return;
         }
 
@@ -74,6 +87,6 @@ public class ClientHolder
     {
         _jsonStream.Close();
         _tcpClient.Close();
-        _server.OnDisconnected(_id);
+        _server.OnClientLeft(_id);
     }
 }

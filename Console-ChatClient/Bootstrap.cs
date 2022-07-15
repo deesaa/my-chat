@@ -1,13 +1,19 @@
-﻿public static class Bootstrap
+﻿using ChatClient;
+using ChatClient.Configuration;
+
+namespace Console_ChatClient;
+
+public static class Bootstrap
 {
     static void Main(string[] args)
     {
-        ChatConnection chat = new ChatConnection();
+        ChatConfiguration chatConfiguration = ChatConfigurationFactory.GetDefaultConfiguration();
+        ChatConnection chat = new ChatConnection(chatConfiguration);
 
         chat.OnMessageFromServer = messageObject =>
         {
             string time = messageObject.UtcTime.ToLocalTime().ToShortTimeString();
-            Console.WriteLine($"{messageObject.Username}: {messageObject.Message} ({time})");
+            Console.WriteLine($"{messageObject.User.Username}: {messageObject.Message} ({time})");
         };
 
         chat.OnOtherClientConnected = name => Console.WriteLine($"NEW BOY JOINED : {name} - WELCOME BUDDY");
@@ -17,38 +23,86 @@
         chat.OnServerDisconnected = () =>
         {
             Console.WriteLine($"WOW! You are disconnected!");
-            ConnectionLoop(chat);
+            chat.BeginConnect(); 
         };
         
-        chat.OnServerConnected = () => Console.WriteLine($"Connected to the server");
+        chat.OnServerConnected = () =>
+        {
+            Console.WriteLine($"Connected to the server");
+        };
         
-        chat.OnUserNameColorChanged = () => Console.WriteLine($"Connected to the server");
+        chat.OnLoginSuccess = () =>
+        {        
+            Console.WriteLine($"LOGIN SUCCESS");
+            _tryingAuth = false;
+            chat.RequestUsersOnServerData();
+            chat.RequestLastMessages(10);
+        };
 
-        chat.SetMessageValidator(ValidatorFactory.GetDefaultMessageValidator());
-        chat.SetNameValidator(ValidatorFactory.GetDefaultNameValidator());
-        chat.SetMessageSterilizer(new TrimSterilizer());
-        chat.SetNameSterilizer(new EmptyCharsSterilizer());
+        chat.OnLoginFail = () =>
+        {
+            _tryingAuth = false;
+            Console.WriteLine($"Wrong name or password");
+        };
+        
+        chat.OnUserNameColorChanged = (name, newColor) =>
+        {
+            Console.WriteLine($"User {name} has changed color to {newColor}");
+        };
 
-        ConnectionLoop(chat);
+        chat.OnUsersOnServerList = (usersList) =>
+        {
+            Console.WriteLine("----SERVER USERS-----");
+            foreach (var userDto in usersList)
+            {
+                Console.WriteLine($"{userDto.Username} with {userDto.Color} color is {userDto.IsOnline}");
+            }
+            Console.WriteLine("----------------");
+        };
+        
+        chat.BeginConnect();
+        
+        
         
         while (true)
         {
-            string message = Console.ReadLine() ?? " ";
-            Ext.ConsoleLineBack();
-            chat.Write(message);
+            if (_tryingAuth)
+            {
+                Thread.Yield();
+                continue;
+            }
+            
+            if (!chat.IsAuthorized)
+            {
+                WriteLogin(chat);
+                _tryingAuth = true;
+            }
+            else
+            {
+                WriteMessage(chat);
+            }
         }
+        //TODO: AUTORECONNECTION IS BROKEN 
     }
 
-    private static void ConnectionLoop(ChatConnection chat)
+    private static bool _tryingAuth = false;
+    
+    
+    
+    private static void WriteLogin(ChatConnection chat)
     {
-        chat.BeginConnect();
-        while (!chat.Connected || !chat.IsNameSet)
-        {
-            Console.WriteLine("Enter Name:");
-            string name = Console.ReadLine() ?? " ";
-            Ext.ConsoleLineBack();
-            chat.SetName(name);
-        }
-        chat.RequestMessageHistory(10);
+        Console.WriteLine("Enter Name:");
+        string name = Console.ReadLine() ?? " ";
+        Console.WriteLine("Enter Password:");
+        string password = Console.ReadLine() ?? " ";
+        Ext.ConsoleLineBack();
+        chat.EnterNamePass(name, password);
+    }
+
+    private static void WriteMessage(ChatConnection chat)
+    {
+        string message = Console.ReadLine() ?? " ";
+        Ext.ConsoleLineBack();
+        chat.Write(message);
     }
 }
