@@ -16,5 +16,8 @@ public static class Bootstrap
         _server = new Server(26950);
         Console.WriteLine("Press any key to shut down the server");
         Console.ReadKey();
+        _server.OnQuit();
+        Console.WriteLine("Chat saved and shot down. Press again to final quit");
+        Console.ReadKey();
     }
 }

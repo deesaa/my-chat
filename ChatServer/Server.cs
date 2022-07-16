@@ -17,12 +17,15 @@ public class Server
     private Guid _serverId;
 
     private IChatDb _chatDb;
+    private ISaveLoad _chatDbSaveLoad;
 
     public Server(int port)
     {
         _port = port;
         _serverId = Guid.NewGuid();
-        _chatDb = ChatDb.CreateOrLoad();
+        _chatDb = new ChatDb();
+        _chatDbSaveLoad = new JsonDbSaveLoad(_chatDb, "chatDb.txt");
+        _chatDbSaveLoad.Load();
 
         Console.WriteLine("Starting server...");
 
@@ -87,7 +90,9 @@ public class Server
                 client.SendMessage(new WrongNameOrPasswordCommand(clientId));
                 return;
             }
-            client.SendMessage(new LoginSuccessCommand(clientId));
+            client.SyncClientId(outuser.Id);
+
+            client.SendMessage(new LoginSuccessCommand(outuser.Id));
             client.IsAuthorized = true;
             Broadcast(new UserJoinedCommand(outuser));
             return;
@@ -137,5 +142,10 @@ public class Server
         if(client == null)
             return;
         client.SendMessage(new SendUsersDataCommand(clientId, _chatDb.GetAllUsers()));
+    }
+
+    public void OnQuit()
+    {
+        _chatDbSaveLoad.Save();
     }
 }

@@ -16,4 +16,9 @@ public struct UserData
         Password = password;
         IsOnline = true;
     }
+
+    public void SetOffline()
+    {
+        IsOnline = false;
+    }
 }

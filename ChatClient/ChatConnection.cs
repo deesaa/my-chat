@@ -63,7 +63,7 @@ public class ChatConnection
         var messageObject = JsonSerializer.Serialize(new
         {
             enterName = outname,
-            enterPassword = outname
+            enterPassword = outpassword
         });
         SendMessage(messageObject);
         return true;
@@ -122,6 +122,7 @@ public class ChatConnection
         if (messageObject.TryGetPropertyValue("loginSuccess", out var loginSuccess))
         {
             _isAuthorized = true;
+           // Guid userIdOnServer = loginSuccess.GetValue<Guid>();
             OnLoginSuccess();
             return;
         }

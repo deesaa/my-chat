@@ -87,4 +87,9 @@ public class ClientHolder
         _tcpClient.Close();
         _server.OnClientLeft(_id);
     }
+
+    public void SyncClientId(Guid clientId)
+    {
+        _id = clientId;
+    }
 }
