@@ -76,6 +76,14 @@ public class ClientHolder
             _server.SendUsersDataToClient(_id);
             return;
         }
+        
+        var setTextColor = message["setTextColor"];
+        if (setTextColor != null)
+        {
+            string color = setTextColor.GetValue<string>();
+            _server.SetTextColorForUser(_id, color);
+            return;
+        }
 
         var messageBody = message["message"]?.GetValue<string>();
         _server.OnMessageFromClient(_id, messageBody ?? "_empty");

@@ -58,7 +58,6 @@ public class Server
     
     private void Broadcast(Command command, bool excludeSelf = true)
     {
-        //_messages.Add(message);
         foreach (var client in _clients)
         {
             if((client.Id != command.OriginId || !excludeSelf) && client.IsAuthorized)
@@ -91,8 +90,8 @@ public class Server
                 return;
             }
             client.SyncClientId(outuser.Id);
-
             client.SendMessage(new LoginSuccessCommand(outuser.Id));
+            _chatDb.SetUserOnline(outuser, true);
             client.IsAuthorized = true;
             Broadcast(new UserJoinedCommand(outuser));
             return;
@@ -108,15 +107,7 @@ public class Server
     public void OnClientLeft(Guid clientId)
     {
         var user = _chatDb.GetUserData(clientId).Value;
-        user = new UserData()
-        {
-            Color = user.Color,
-            Id = user.Id,
-            Password = user.Password,
-            Username = user.Username,
-            IsOnline = false
-        };
-        _chatDb.UpdateUserData(user);
+        _chatDb.SetUserOnline(user, false);
         var messageObject = new UserLeftCommand(clientId, user.Username);
         Broadcast(messageObject);
         _clients.RemoveAll(client => client.Id == clientId);
@@ -147,5 +138,12 @@ public class Server
     public void OnQuit()
     {
         _chatDbSaveLoad.Save();
+    }
+
+    public void SetTextColorForUser(Guid clientId, string color)
+    {
+        UserData user = _chatDb.GetUserData(clientId).Value;
+        _chatDb.SetUserColor(user, color);
+        Broadcast(new UserChangedTextColorCommand(clientId, user.Username, color), false);
     }
 }

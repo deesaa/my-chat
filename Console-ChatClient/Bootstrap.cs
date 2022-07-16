@@ -45,7 +45,7 @@ public static class Bootstrap
             Console.WriteLine($"Wrong name or password");
         };
         
-        chat.OnUserNameColorChanged = (name, newColor) =>
+        chat.OnUserChangedTextColor = (name, newColor) =>
         {
             Console.WriteLine($"User {name} has changed color to {newColor}");
         };
@@ -59,10 +59,7 @@ public static class Bootstrap
             }
             Console.WriteLine("----------------");
         };
-        
         chat.BeginConnect();
-        
-        
         
         while (true)
         {
@@ -104,6 +101,13 @@ public static class Bootstrap
     {
         string message = Console.ReadLine() ?? " ";
         Ext.ConsoleLineBack();
+
+        if (message.Contains("setColor:"))
+        {
+            string color = message.Replace("setColor:", "");
+            chat.ChangeTextColor(color);
+            return;
+        }
         chat.Write(message);
     }
 }

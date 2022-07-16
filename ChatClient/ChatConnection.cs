@@ -30,7 +30,7 @@ public class ChatConnection
     public Action<UserDto[]> OnUsersOnServerList;
     public Action<string> OnOtherClientConnected;
     public Action<string> OnOtherClientDisconnected;
-    public Action<string, string> OnUserNameColorChanged;
+    public Action<string, string> OnUserChangedTextColor;
     public Action OnLoginSuccess;
     public Action OnLoginFail;
 
@@ -46,10 +46,18 @@ public class ChatConnection
 
         _jsonStream = new JsonNetStream(_tcpClient);
         _jsonStream.OnNext = RouteMessageFromServer;
+        _jsonStream.OnDisconnect = ServerDisconnected;
     }
 
     public void BeginConnect() => 
         _tcpClient.BeginConnect(_ip, _port, OnTcpConnect, null);
+    
+    private void ServerDisconnected()
+    {
+        _isAuthorized = false;
+        _tcpClient.Client.Disconnect(true);
+        OnServerDisconnected();
+    }
     
     public bool Connected => _tcpClient.Connected;
 
@@ -87,6 +95,15 @@ public class ChatConnection
         var messageObject = JsonSerializer.Serialize(new
         {
             sendMessageHistoryCount = messagesCount
+        });
+        SendMessage(messageObject);
+    }
+
+    public void ChangeTextColor(string newColor)
+    {
+        var messageObject = JsonSerializer.Serialize(new
+        {
+            setTextColor = newColor
         });
         SendMessage(messageObject);
     }
@@ -133,11 +150,11 @@ public class ChatConnection
             return;
         }
         
-        if (messageObject.TryGetPropertyValue("userSetNameColor", out var userSetNameColor))
+        if (messageObject.TryGetPropertyValue("userChangedTextColor", out var userChangedTextColor))
         {
-            var newNameColor = userSetNameColor.GetValue<string>();
-            var usernameWithNewColor = messageObject["username"].GetValue<string>();
-            OnUserNameColorChanged(usernameWithNewColor, newNameColor);
+            var newTextColor = userChangedTextColor.GetValue<string>();
+            var userName = messageObject["userName"].GetValue<string>();
+            OnUserChangedTextColor(userName, newTextColor);
             return;
         }
         
@@ -175,16 +192,7 @@ public class ChatConnection
         }
     }
 
-    private void ServerDisconnected()
-    {
-        ResetConnection();
-        OnServerDisconnected();
-    }
-
-    private void ResetConnection()
-    {
-        _isAuthorized = false;
-    }
+   
 
     private void OnTcpConnect(IAsyncResult ar)
     {
