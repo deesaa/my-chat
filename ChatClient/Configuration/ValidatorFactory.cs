@@ -6,8 +6,8 @@ public static class ChatConfigurationFactory
     {
         ChatConfiguration config = new ChatConfiguration();
         
-        config.SetValidator("username", ValidatorFactory.GetDefaultNameValidator());
-        config.SetSterilizer("username", new EmptyCharsSterilizer());
+        config.SetValidator("name", ValidatorFactory.GetDefaultNameValidator());
+        config.SetSterilizer("name", new EmptyCharsSterilizer());
         
         config.SetValidator("password", ValidatorFactory.GetDefaultPasswordValidator());
         config.SetSterilizer("password", new EmptyCharsSterilizer());

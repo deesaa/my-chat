@@ -22,8 +22,13 @@ public class ChatConfiguration
         bool isValid = true;
         if (_argSterilizers.ContainsKey(argName))
             value = _argSterilizers[argName].Sterilize(value);
+        else
+            Console.WriteLine($"WARNING: There is no Sterilizer for arg {argName}");
+        
         if (_argValidators.ContainsKey(argName))
             isValid = _argValidators[argName].Validate(value);
+        else
+            Console.WriteLine($"WARNING: There is no Validator for arg {argName}");
 
         outname = value;
         return isValid;

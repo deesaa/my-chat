@@ -48,8 +48,6 @@ public class ClientHolder
         _jsonStream.Write(jsonMessage);
         Console.WriteLine($"Message sent from server to client id : {_id}, message : {command}");
     }
-
-    
     
     private void RouteMessageFromClient(JsonNode message)
     {

@@ -53,21 +53,20 @@ public class ChatConnection
     
     public bool Connected => _tcpClient.Connected;
 
-    public void EnterNamePass(string name, string password)
+    public bool TryEnterNamePass(string name, string password)
     {
-        if(!_chatConfiguration.SterilizeValidate(name, nameof(name), out string outname))
-            return;
-        name = outname;
-        if(!_chatConfiguration.SterilizeValidate(password, nameof(password), out string outpassword))
-            return;
-        password = outpassword;
+        bool allValid = true;
+        allValid &= _chatConfiguration.SterilizeValidate(name, nameof(name), out string outname);
+        allValid &= _chatConfiguration.SterilizeValidate(password, nameof(password), out string outpassword);
+        if (!allValid) return false;
         
         var messageObject = JsonSerializer.Serialize(new
         {
-            enterName = name,
-            enterPassword = password
+            enterName = outname,
+            enterPassword = outname
         });
         SendMessage(messageObject);
+        return true;
     }
     
     public void Write(string message)

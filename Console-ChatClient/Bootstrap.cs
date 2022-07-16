@@ -74,8 +74,9 @@ public static class Bootstrap
             
             if (!chat.IsAuthorized)
             {
-                WriteLogin(chat);
-                _tryingAuth = true;
+                bool isEnterDataValid = TryWriteLogin(chat);
+                if(isEnterDataValid)
+                    _tryingAuth = true;
             }
             else
             {
@@ -89,14 +90,14 @@ public static class Bootstrap
     
     
     
-    private static void WriteLogin(ChatConnection chat)
+    private static bool TryWriteLogin(ChatConnection chat)
     {
         Console.WriteLine("Enter Name:");
         string name = Console.ReadLine() ?? " ";
         Console.WriteLine("Enter Password:");
         string password = Console.ReadLine() ?? " ";
         Ext.ConsoleLineBack();
-        chat.EnterNamePass(name, password);
+        return chat.TryEnterNamePass(name, password);
     }
 
     private static void WriteMessage(ChatConnection chat)
