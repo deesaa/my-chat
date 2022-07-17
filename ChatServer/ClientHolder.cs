@@ -10,21 +10,18 @@ namespace ChatServer;
 public class ClientHolder
 {
     private Server _server;
-    //private string? _name;
-    private Guid _id;
     private TcpClient _tcpClient;
     private JsonNetStream _jsonStream;
     
     private int _bufferSize = 8192;
-
-    public bool IsConnected => _tcpClient != null && _tcpClient.Client != null;
-    public Guid Id => _id;
-   // public string Username => _name;
+    public Guid Id { get; private set; }
     public bool IsAuthorized { get; set; }
+
+    private List<IMessageRout> _messageRouts = MessageRoutsFactory.GetDefaultMessageRouts();
 
     public ClientHolder(Guid id, Server server)
     {
-        _id = id;
+        Id = id;
         _server = server;
     }
 
@@ -41,63 +38,31 @@ public class ClientHolder
 
     public void SendMessage(Command command)
     {
-        if(!IsConnected)
-            return;
-
         var jsonMessage = command.ToJson();
         _jsonStream.Write(jsonMessage);
-        Console.WriteLine($"Message sent from server to client id : {_id}, message : {command}");
+        Console.WriteLine($"Message sent from server to client id : {Id}, message : {command}");
     }
-    
+
     private void RouteMessageFromClient(JsonNode message)
     {
-        Console.WriteLine($"User {_id} : Server receive message: {message}");
+        Console.WriteLine($"User {Id} : Server receive message: {message}");
 
-        var enterName = message["enterName"];
-        var enterPassword = message["enterPassword"];
-        if (enterName != null && enterPassword != null)
+        foreach (var messageRout in _messageRouts)
         {
-            string name = enterName.GetValue<string>();
-            string password = enterPassword.GetValue<string>();
-            _server.OnClientTryEnterNamePassword(_id, name, password);
-            return;
+            if(messageRout.TryRout(Id, _server, message))
+                break;
         }
-
-        var sendMessageHistoryCount = message["sendMessageHistoryCount"];
-        if (sendMessageHistoryCount != null)
-        {
-            _server.SendMessageHistoryToClient(_id, sendMessageHistoryCount.GetValue<int>());
-            return;
-        }
-        
-        var sendUsersData = message["sendUsersData"];
-        if (sendUsersData != null)
-        {
-            _server.SendUsersDataToClient(_id);
-            return;
-        }
-        
-        var setTextColor = message["setTextColor"];
-        if (setTextColor != null)
-        {
-            string color = setTextColor.GetValue<string>();
-            _server.SetTextColorForUser(_id, color);
-            return;
-        }
-
-        var messageBody = message["message"]?.GetValue<string>();
-        _server.OnMessageFromClient(_id, messageBody ?? "_empty");
     }
 
     private void Disconnect()
     {
         _jsonStream.Close();
         _tcpClient.Close();
-        _server.OnClientLeft(_id);
+        _server.OnClientLeft(Id);
     }
 
     public void SyncClientId(Guid clientId)
     {
-        _id = clientId;
+        Id = clientId;
     }
 }
