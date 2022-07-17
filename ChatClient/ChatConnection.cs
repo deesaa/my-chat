@@ -24,16 +24,7 @@ public class ChatConnection
     private bool _isAuthorized = false;
     public bool IsAuthorized => _isAuthorized;
 
-    public Action<MessageDto> OnMessageFromServer;
-    public Action OnServerConnected;
-    public Action OnServerDisconnected;
-    public Action<UserDto[]> OnUsersOnServerList;
-    public Action<string> OnOtherClientConnected;
-    public Action<string> OnOtherClientDisconnected;
-    public Action<string, string> OnUserChangedTextColor;
-    public Action OnLoginSuccess;
-    public Action OnLoginFail;
-
+    private IChatListener _chatListener;
     
     public ChatConnection(ChatConfiguration configuration)
     {
@@ -56,7 +47,7 @@ public class ChatConnection
     {
         _isAuthorized = false;
         _tcpClient.Client.Disconnect(true);
-        OnServerDisconnected();
+        _chatListener.OnServerDisconnected();
     }
     
     public bool Connected => _tcpClient.Connected;
@@ -125,14 +116,14 @@ public class ChatConnection
         {
             var jsonString = messageObject["user"].ToJsonString();
             UserDto user = JsonConvert.DeserializeObject<UserDto>(jsonString);
-            OnOtherClientConnected(user.Username);
+            _chatListener.OnOtherClientConnected(user.Username);
             return;
         }
 
         if (messageObject.TryGetPropertyValue("userLeftName", out var userLeftName))
         {
             var name = userLeftName.GetValue<string>();
-            OnOtherClientDisconnected(name);
+            _chatListener.OnOtherClientDisconnected(name);
             return;
         }
         
@@ -140,13 +131,13 @@ public class ChatConnection
         {
             _isAuthorized = true;
            // Guid userIdOnServer = loginSuccess.GetValue<Guid>();
-            OnLoginSuccess();
+           _chatListener.OnLoginSuccess();
             return;
         }
         
         if (messageObject.TryGetPropertyValue("wrongNamePass", out var wrongNamePass))
         {
-            OnLoginFail();
+            _chatListener.OnLoginFail();
             return;
         }
         
@@ -154,7 +145,7 @@ public class ChatConnection
         {
             var newTextColor = userChangedTextColor.GetValue<string>();
             var userName = messageObject["userName"].GetValue<string>();
-            OnUserChangedTextColor(userName, newTextColor);
+            _chatListener.OnUserChangedTextColor(userName, newTextColor);
             return;
         }
         
@@ -167,14 +158,14 @@ public class ChatConnection
             var jsonString = usersOnServer.ToJsonString();
             UserDto[] users = JsonConvert.DeserializeObject<UserDto[]>(jsonString);
             
-            OnUsersOnServerList(users);
+            _chatListener.OnUsersOnServerList(users);
             return;
         }
         
         
         var json = messageObject["userMessage"].ToJsonString();
         var messageData = JsonConvert.DeserializeObject<MessageDto>(json);
-        OnMessageFromServer(messageData);
+        _chatListener.OnMessageFromServer(messageData);
     }
 
     private void SendMessage(string message)
@@ -210,7 +201,12 @@ public class ChatConnection
         if(!_tcpClient.Connected)
             return;
         
-        OnServerConnected();
+        _chatListener.OnServerConnected();
         _jsonStream.BeginRead();
+    }
+
+    public void AddListener(IChatListener chatListener)
+    {
+        _chatListener = chatListener;
     }
 }
