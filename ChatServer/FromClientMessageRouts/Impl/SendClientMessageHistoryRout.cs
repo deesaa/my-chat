@@ -1,8 +1,9 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace ChatServer;
 
-public class SendMessageHistoryRout : IMessageRout
+public class SendClientMessageHistoryRout : IClientMessageRout
 {
     public bool TryRout(Guid senderId, Server server, JsonNode message)
     {
@@ -12,5 +13,13 @@ public class SendMessageHistoryRout : IMessageRout
         
         server.SendMessageHistoryToClient(senderId, sendMessageHistoryCount.GetValue<int>());
         return true;
+    }
+
+    public static string BuildRequest(int messagesCount)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            sendMessageHistoryCount = messagesCount
+        });
     }
 }

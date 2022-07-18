@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace ChatServer;
 
-public class EnterNamePasswordRout : IMessageRout
+public class EnterNamePasswordRout : IClientMessageRout
 {
     public bool TryRout(Guid senderId, Server server, JsonNode message)
     {

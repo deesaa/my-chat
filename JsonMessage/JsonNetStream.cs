@@ -15,6 +15,7 @@ public class JsonNetStream
 
     private byte[] _receiveBuffer;
     private int _bufferSize;
+    
     public JsonNetStream(TcpClient tcpClient)
     {
         _bufferSize = tcpClient.ReceiveBufferSize;

@@ -5,25 +5,25 @@ namespace ChatClient;
 public class ChatConfiguration
 {
     private readonly Dictionary<string, IValidator> _argValidators = new();
-    private readonly Dictionary<string, ISterilizer> _argSterilizers = new();
+    private readonly Dictionary<string, ISanitizer> _argSanitizers = new();
 
     public void SetValidator(string argName, IValidator validator)
     {
         _argValidators[argName] = validator;
     }
     
-    public void SetSterilizer(string argName, ISterilizer sterilizer)
+    public void SetSanitizer(string argName, ISanitizer sanitizer)
     {
-        _argSterilizers[argName] = sterilizer;
+        _argSanitizers[argName] = sanitizer;
     }
 
-    public bool SterilizeValidate(string value, string argName, out string outname)
+    public bool SanitizeValidate(string value, string argName, out string outname)
     {
         bool isValid = true;
-        if (_argSterilizers.ContainsKey(argName))
-            value = _argSterilizers[argName].Sterilize(value);
+        if (_argSanitizers.ContainsKey(argName))
+            value = _argSanitizers[argName].Sanitize(value);
         else
-            Console.WriteLine($"WARNING: There is no Sterilizer for arg {argName}");
+            Console.WriteLine($"WARNING: There is no Sanitizer for arg {argName}");
         
         if (_argValidators.ContainsKey(argName))
             isValid = _argValidators[argName].Validate(value);

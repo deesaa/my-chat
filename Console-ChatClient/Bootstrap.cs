@@ -14,7 +14,7 @@ public static class Bootstrap
         
         while (true)
         {
-            if (consoleChatListener.TryingAuth)
+            if (chat.TryingAuth)
             {
                 Thread.Yield();
                 continue;
@@ -24,18 +24,15 @@ public static class Bootstrap
             {
                 bool isEnterDataValid = TryWriteLogin(chat);
                 if(isEnterDataValid)
-                    consoleChatListener.TryingAuth = true;
+                    chat.TryingAuth = true;
             }
             else
             {
                 WriteMessage(chat);
             }
         }
-        //TODO: AUTORECONNECTION IS BROKEN 
     }
 
-   // private static bool _tryingAuth = false;
-    
     private static bool TryWriteLogin(ChatConnection chat)
     {
         Console.WriteLine("Enter Name:");
@@ -57,6 +54,6 @@ public static class Bootstrap
             chat.ChangeTextColor(color);
             return;
         }
-        chat.Write(message);
+        chat.WriteMessage(message);
     }
 }

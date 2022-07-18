@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace ChatServer;
 
-public class DefaultMessageRout : IMessageRout
+public class DefaultClientMessageRout : IClientMessageRout
 {
     public bool TryRout(Guid senderId, Server server, JsonNode message)
     {

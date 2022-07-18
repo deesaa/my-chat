@@ -1,10 +1,10 @@
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using ChatClient.FromServerMessageRouts;
+using ChatServer;
 using JsonMessage;
-using JsonMessage.DTO;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
+
 
 namespace ChatClient;
 
@@ -12,20 +12,16 @@ public class ChatConnection
 {
     private string _ip = "127.0.0.1";
     private int _port = 26950;
-
     private int _bufferSize = 8192;
-
     private TcpClient _tcpClient;
     private JsonNetStream _jsonStream;
     private byte[] _receiveBuffer;
-    
     private ChatConfiguration _chatConfiguration;
-
-    private bool _isAuthorized = false;
-    public bool IsAuthorized => _isAuthorized;
-
     private IChatListener _chatListener;
-    
+    private List<IServerMessageRout> _serverMessageRouts = ServerMessageRoutsFactory.GetDefaultServerMessageRouts();
+    public bool IsAuthorized { get; private set; } = false;
+    public bool TryingAuth { get; set; }
+
     public ChatConnection(ChatConfiguration configuration)
     {
         _chatConfiguration = configuration;
@@ -45,19 +41,19 @@ public class ChatConnection
     
     private void ServerDisconnected()
     {
-        _isAuthorized = false;
+        IsAuthorized = false;
         _tcpClient.Client.Disconnect(true);
         _chatListener.OnServerDisconnected();
     }
-    
-    public bool Connected => _tcpClient.Connected;
 
     public bool TryEnterNamePass(string name, string password)
     {
         bool allValid = true;
-        allValid &= _chatConfiguration.SterilizeValidate(name, nameof(name), out string outname);
-        allValid &= _chatConfiguration.SterilizeValidate(password, nameof(password), out string outpassword);
+        allValid &= _chatConfiguration.SanitizeValidate(name, nameof(name), out string outname);
+        allValid &= _chatConfiguration.SanitizeValidate(password, nameof(password), out string outpassword);
         if (!allValid) return false;
+        
+        TryingAuth = true;
         
         var messageObject = JsonSerializer.Serialize(new
         {
@@ -68,9 +64,9 @@ public class ChatConnection
         return true;
     }
     
-    public void Write(string message)
+    public void WriteMessage(string message)
     {
-        if(!_chatConfiguration.SterilizeValidate(message, nameof(message), out string outmessage))
+        if(!_chatConfiguration.SanitizeValidate(message, nameof(message), out string outmessage))
             return;
         message = outmessage;
         
@@ -83,11 +79,8 @@ public class ChatConnection
     
     public void RequestLastMessages(int messagesCount)
     {
-        var messageObject = JsonSerializer.Serialize(new
-        {
-            sendMessageHistoryCount = messagesCount
-        });
-        SendMessage(messageObject);
+        var message = SendClientMessageHistoryRout.BuildRequest(messagesCount);
+        SendMessage(message);
     }
 
     public void ChangeTextColor(string newColor)
@@ -110,62 +103,20 @@ public class ChatConnection
 
     private void RouteMessageFromServer(JsonNode messageJson)
     {
-        var messageObject = messageJson.AsObject();
-
-        if (messageObject.TryGetPropertyValue("userJoinedServer", out var userJoinedName))
+        foreach (var messageRout in _serverMessageRouts)
         {
-            var jsonString = messageObject["user"].ToJsonString();
-            UserDto user = JsonConvert.DeserializeObject<UserDto>(jsonString);
-            _chatListener.OnOtherClientConnected(user.Username);
-            return;
+            if (messageRout.TryRout(_chatListener, messageJson))
+            {
+                if (messageRout is WrongNameOrPassRout)
+                    TryingAuth = false;
+                if (messageRout is LoginSuccessRout)
+                {
+                    TryingAuth = false;
+                    IsAuthorized = true;
+                }
+                break;
+            }
         }
-
-        if (messageObject.TryGetPropertyValue("userLeftName", out var userLeftName))
-        {
-            var name = userLeftName.GetValue<string>();
-            _chatListener.OnOtherClientDisconnected(name);
-            return;
-        }
-        
-        if (messageObject.TryGetPropertyValue("loginSuccess", out var loginSuccess))
-        {
-            _isAuthorized = true;
-           // Guid userIdOnServer = loginSuccess.GetValue<Guid>();
-           _chatListener.OnLoginSuccess();
-            return;
-        }
-        
-        if (messageObject.TryGetPropertyValue("wrongNamePass", out var wrongNamePass))
-        {
-            _chatListener.OnLoginFail();
-            return;
-        }
-        
-        if (messageObject.TryGetPropertyValue("userChangedTextColor", out var userChangedTextColor))
-        {
-            var newTextColor = userChangedTextColor.GetValue<string>();
-            var userName = messageObject["userName"].GetValue<string>();
-            _chatListener.OnUserChangedTextColor(userName, newTextColor);
-            return;
-        }
-        
-        if (messageObject.TryGetPropertyValue("usersOnServer", out var usersOnServer))
-        {
-            var jsonArray = usersOnServer.AsArray();
-            if(jsonArray.Count <= 0)
-                return;
-
-            var jsonString = usersOnServer.ToJsonString();
-            UserDto[] users = JsonConvert.DeserializeObject<UserDto[]>(jsonString);
-            
-            _chatListener.OnUsersOnServerList(users);
-            return;
-        }
-        
-        
-        var json = messageObject["userMessage"].ToJsonString();
-        var messageData = JsonConvert.DeserializeObject<MessageDto>(json);
-        _chatListener.OnMessageFromServer(messageData);
     }
 
     private void SendMessage(string message)
@@ -182,9 +133,7 @@ public class ChatConnection
             ServerDisconnected();
         }
     }
-
-   
-
+    
     private void OnTcpConnect(IAsyncResult ar)
     {
         try

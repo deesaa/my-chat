@@ -19,3 +19,8 @@
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/obj/Debug/net6.0/Console-ChatClient.pdb
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/obj/Debug/net6.0/Console-ChatClient.genruntimeconfig.cache
 /Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/Newtonsoft.Json.dll
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/ChatServer.deps.json
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/ChatServer.runtimeconfig.json
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/ChatServer
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/ChatServer.dll
+/Users/jds/RiderProjects/ChatServer/Console-ChatClient/bin/Debug/net6.0/ChatServer.pdb

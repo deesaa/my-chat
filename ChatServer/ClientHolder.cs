@@ -17,7 +17,7 @@ public class ClientHolder
     public Guid Id { get; private set; }
     public bool IsAuthorized { get; set; }
 
-    private List<IMessageRout> _messageRouts = MessageRoutsFactory.GetDefaultMessageRouts();
+    private List<IClientMessageRout> _messageRouts = ClientMessageRoutsFactory.GetDefaultClientMessageRouts();
 
     public ClientHolder(Guid id, Server server)
     {
@@ -36,7 +36,7 @@ public class ClientHolder
         _jsonStream.BeginRead();
     }
 
-    public void SendMessage(Command command)
+    public void Send(Command command)
     {
         var jsonMessage = command.ToJson();
         _jsonStream.Write(jsonMessage);

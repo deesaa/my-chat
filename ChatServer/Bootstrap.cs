@@ -12,12 +12,16 @@ public static class Bootstrap
     private static Server _server;
     static void Main(string[] args)
     {
-        Console.Title = "Chat Server";
-        _server = new Server(26950);
-        Console.WriteLine("Press any key to shut down the server");
-        Console.ReadKey();
-        _server.OnQuit();
-        Console.WriteLine("Chat saved and shot down. Press again to final quit");
-        Console.ReadKey();
+        try
+        {
+            Console.Title = "Chat Server";
+            _server = new Server(26950);
+            Console.WriteLine("Press any key to shut down the server");
+            Console.ReadKey();
+        }
+        finally
+        {
+            _server.OnQuit();
+        }
     }
 }

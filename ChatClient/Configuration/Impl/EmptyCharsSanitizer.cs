@@ -1,8 +1,8 @@
 namespace ChatClient.Configuration;
 
-public class EmptyCharsSterilizer : ISterilizer
+public class EmptyCharsSanitizer : ISanitizer
 {
-    public string Sterilize(string value)
+    public string Sanitize(string value)
     {
         return value.Replace(" ", "");
     }

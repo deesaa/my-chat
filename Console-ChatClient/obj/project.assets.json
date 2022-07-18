@@ -15,6 +15,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v6.0",
         "dependencies": {
+          "ChatServer": "1.0.0",
           "JsonMessage": "1.0.0",
           "Newtonsoft.Json": "13.0.2-beta1"
         },
@@ -23,6 +24,20 @@
         },
         "runtime": {
           "bin/placeholder/ChatClient.dll": {}
+        }
+      },
+      "ChatServer/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v6.0",
+        "dependencies": {
+          "JsonMessage": "1.0.0",
+          "Newtonsoft.Json": "13.0.2-beta1"
+        },
+        "compile": {
+          "bin/placeholder/ChatServer.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/ChatServer.dll": {}
         }
       },
       "JsonMessage/1.0.0": {
@@ -72,6 +87,11 @@
       "type": "project",
       "path": "../ChatClient/ChatClient.csproj",
       "msbuildProject": "../ChatClient/ChatClient.csproj"
+    },
+    "ChatServer/1.0.0": {
+      "type": "project",
+      "path": "../ChatServer/ChatServer.csproj",
+      "msbuildProject": "../ChatServer/ChatServer.csproj"
     },
     "JsonMessage/1.0.0": {
       "type": "project",

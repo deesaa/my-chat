@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ChatServer\ChatServer.csproj" />
       <ProjectReference Include="..\JsonMessage\JsonMessage.csproj" />
     </ItemGroup>
 

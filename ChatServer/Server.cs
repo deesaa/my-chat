@@ -11,18 +11,13 @@ public class Server
 {
     private int _port;
     private TcpListener _tcpListener;
-
     private List<ClientHolder> _clients = new();
-   // private List<Message> _messages = new();
-    private Guid _serverId;
-
     private IChatDb _chatDb;
     private ISaveLoad _chatDbSaveLoad;
 
     public Server(int port)
     {
         _port = port;
-        _serverId = Guid.NewGuid();
         _chatDb = new ChatDb();
         _chatDbSaveLoad = new JsonDbSaveLoad(_chatDb, "chatDb.txt");
         _chatDbSaveLoad.Load();
@@ -61,7 +56,7 @@ public class Server
         foreach (var client in _clients)
         {
             if((client.Id != command.OriginId || !excludeSelf) && client.IsAuthorized)
-                client.SendMessage(command);
+                client.Send(command);
         }
     }
     
@@ -86,11 +81,11 @@ public class Server
         {
             if (outuser.Password != password)
             {
-                client.SendMessage(new WrongNameOrPasswordCommand(clientId));
+                client.Send(new WrongNameOrPasswordCommand(clientId));
                 return;
             }
             client.SyncClientId(outuser.Id);
-            client.SendMessage(new LoginSuccessCommand(outuser.Id));
+            client.Send(new LoginSuccessCommand(outuser.Id));
             _chatDb.SetUserOnline(outuser, true);
             client.IsAuthorized = true;
             Broadcast(new UserJoinedCommand(outuser));
@@ -99,7 +94,7 @@ public class Server
 
         var newUser = new UserData(clientId, name, password);
         _chatDb.AddUserData(newUser);
-        client.SendMessage(new LoginSuccessCommand(newUser.Id));
+        client.Send(new LoginSuccessCommand(newUser.Id));
         client.IsAuthorized = true;
         Broadcast(new UserJoinedCommand(newUser));
     }
@@ -123,7 +118,7 @@ public class Server
         foreach (var messageData in _chatDb.GetAllMessages().TakeLast(sendMessageHistoryCount))
         {
             UserData user = _chatDb.GetUserData(messageData.SenderUserId).Value;
-            client.SendMessage(new MessageCommand(messageData, user));
+            client.Send(new MessageCommand(messageData, user));
         }
     }
 
@@ -132,18 +127,18 @@ public class Server
         var client = _clients.FirstOrDefault(client => client.Id == clientId);
         if(client == null)
             return;
-        client.SendMessage(new SendUsersDataCommand(clientId, _chatDb.GetAllUsers()));
+        client.Send(new SendUsersDataCommand(clientId, _chatDb.GetAllUsers()));
     }
-
-    public void OnQuit()
-    {
-        _chatDbSaveLoad.Save();
-    }
-
+    
     public void SetTextColorForUser(Guid clientId, string color)
     {
         UserData user = _chatDb.GetUserData(clientId).Value;
         _chatDb.SetUserColor(user, color);
         Broadcast(new UserChangedTextColorCommand(clientId, user.Username, color), false);
+    }
+    
+    public void OnQuit()
+    {
+        _chatDbSaveLoad.Save();
     }
 }

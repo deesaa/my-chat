@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace ChatServer;
 
-public class SetUserTextColorRout : IMessageRout
+public class SetUserTextColorRout : IClientMessageRout
 {
     public bool TryRout(Guid senderId, Server server, JsonNode message)
     {

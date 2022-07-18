@@ -7,19 +7,8 @@ public class MessageDecoder
     private Queue<byte> _dataQueue = new();
     private bool _needHeader = true;
     private int _nextMessageByteSize = -1;
-    
     public Action<string> OnNext;
-    
-    private void WriteMessage(byte[] bytes)
-    {
-        return;
-        int messageByteCount = bytes.Length;
-        byte[] messageByteCountBytes = BitConverter.GetBytes(messageByteCount);
-        PutBytes(messageByteCountBytes);
-        PutBytes(bytes);
-        ProcessQueue();
-    }
-    
+
     public void PutBytes(byte[] bytes)
     {
         foreach (var @byte in bytes)

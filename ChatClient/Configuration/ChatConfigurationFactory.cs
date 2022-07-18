@@ -7,13 +7,13 @@ public static class ChatConfigurationFactory
         ChatConfiguration config = new ChatConfiguration();
         
         config.SetValidator("name", ValidatorFactory.GetDefaultNameValidator());
-        config.SetSterilizer("name", new EmptyCharsSterilizer());
+        config.SetSanitizer("name", new EmptyCharsSanitizer());
         
         config.SetValidator("password", ValidatorFactory.GetDefaultPasswordValidator());
-        config.SetSterilizer("password", new EmptyCharsSterilizer());
+        config.SetSanitizer("password", new EmptyCharsSanitizer());
         
         config.SetValidator("message", ValidatorFactory.GetDefaultMessageValidator());
-        config.SetSterilizer("message", new TrimSterilizer());
+        config.SetSanitizer("message", new TrimSanitizer());
         
         return config;
     }

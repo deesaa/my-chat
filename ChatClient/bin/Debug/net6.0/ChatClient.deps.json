@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v6.0": {
       "ChatClient/1.0.0": {
         "dependencies": {
+          "ChatServer": "1.0.0",
           "JsonMessage": "1.0.0",
           "Newtonsoft.Json": "13.0.2-beta1"
         },
@@ -21,6 +22,15 @@
             "assemblyVersion": "13.0.0.0",
             "fileVersion": "13.0.2.26916"
           }
+        }
+      },
+      "ChatServer/1.0.0": {
+        "dependencies": {
+          "JsonMessage": "1.0.0",
+          "Newtonsoft.Json": "13.0.2-beta1"
+        },
+        "runtime": {
+          "ChatServer.dll": {}
         }
       },
       "JsonMessage/1.0.0": {
@@ -42,6 +52,11 @@
       "sha512": "sha512-lrHT3bmqM13QHvgtj2Y30BCRsq6lX07klW5tScx2B7ihqWeG6aVXrHxVALN34+boed9ybVtlRFLOuKD44Xuttg==",
       "path": "newtonsoft.json/13.0.2-beta1",
       "hashPath": "newtonsoft.json.13.0.2-beta1.nupkg.sha512"
+    },
+    "ChatServer/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "JsonMessage/1.0.0": {
       "type": "project",

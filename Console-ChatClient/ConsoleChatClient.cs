@@ -6,7 +6,6 @@ namespace Console_ChatClient;
 public class ConsoleChatClient : IChatListener
 {
     private ChatConnection _chat;
-    public bool TryingAuth { get; set; }
     public ConsoleChatClient(ChatConnection chatConnection)
     {
         _chat = chatConnection;
@@ -57,14 +56,12 @@ public class ConsoleChatClient : IChatListener
     public void OnLoginSuccess()
     {
         Console.WriteLine($"LOGIN SUCCESS");
-        TryingAuth = false;
         _chat.RequestUsersOnServerData();
         _chat.RequestLastMessages(10);
     }
 
     public void OnLoginFail()
     {
-        TryingAuth = false;
         Console.WriteLine($"Wrong name or password");
     }
 }
