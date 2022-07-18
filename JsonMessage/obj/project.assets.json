@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj",
+      "projectUniqueName": "/Users/jds/RiderProjects/MyChat/JsonMessage/JsonMessage.csproj",
       "projectName": "JsonMessage",
-      "projectPath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj",
+      "projectPath": "/Users/jds/RiderProjects/MyChat/JsonMessage/JsonMessage.csproj",
       "packagesPath": "/Users/jds/.nuget/packages/",
-      "outputPath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/obj/",
+      "outputPath": "/Users/jds/RiderProjects/MyChat/JsonMessage/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/jds/.nuget/NuGet/NuGet.Config"
@@ -58,7 +58,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/Users/jds/.dotnet/sdk/6.0.101/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/Users/jds/.dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
       }
     }
   }

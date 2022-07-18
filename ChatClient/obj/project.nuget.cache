@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "mp+e4g3zYgoBaPlSqW+l7DkUc6nhWePvUFvSwfoaeCznuyz2XGTE6M5QlustPybIB07Lg6s+SIyLvoOjZIupMg==",
+  "dgSpecHash": "+yrDRKp5LZkpHQrcJMwMIgefdMK0h3hJtsWVasMx+KIcoG2R0I++D8rZWC9PQoLQ6GTpVHtm3ths8Zl1nRSdCg==",
   "success": true,
-  "projectFilePath": "/Users/jds/RiderProjects/ChatServer/ChatClient/ChatClient.csproj",
+  "projectFilePath": "/Users/jds/RiderProjects/MyChat/ChatClient/ChatClient.csproj",
   "expectedPackageFiles": [
     "/Users/jds/.nuget/packages/newtonsoft.json/13.0.2-beta1/newtonsoft.json.13.0.2-beta1.nupkg.sha512"
   ],

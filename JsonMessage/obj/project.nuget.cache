@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "vhOT+bvULBsGe0JqBYHDCJQ4VjCMom+9cYTrZl/KzxXo78qDXx3DzCQnXX0eOaEx1lQgOpLD/tEz4S35XXI7Og==",
+  "dgSpecHash": "m8HghFPycX6L6bzuMgF6nw/JYFhal6mKQN9dmrRdbWmy5pGe4nqs7Qnr7RIiElfJwij+xCzVHbYAdaNAzfs8jw==",
   "success": true,
-  "projectFilePath": "/Users/jds/RiderProjects/ChatServer/JsonMessage/JsonMessage.csproj",
+  "projectFilePath": "/Users/jds/RiderProjects/MyChat/JsonMessage/JsonMessage.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
